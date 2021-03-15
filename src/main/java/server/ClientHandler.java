@@ -38,9 +38,40 @@ public class ClientHandler implements Runnable {
 						out.writeUTF("ERROR");
 					}
 				} else if ("download".equals(command)) {
+					try {
+						File file = new File("server" + File.separator + in.readUTF());
+						if (file.exists()) {
+							long length = file.length();
+							out.writeLong(length);
+							FileInputStream fis = new FileInputStream(file);
+							int read = 0;
+							byte[] buffer = new byte[256];
+							while ((read = fis.read(buffer)) != -1) {
+								out.write(buffer, 0, read);
+							}
+
+							fis.close();
+							out.writeUTF("File sent");
+							out.flush();
+//							String status = in.readUTF();
+						}
+					}	catch (IOException e) {
+						out.writeUTF("ERROR");
+					}
 					// TODO: 02.03.2021
 					// realize download
 				} else if ("remove".equals(command)) {
+					try {
+						File file = new File("server" + File.separator + in.readUTF());
+						if (file.exists()) {
+							file.delete();
+							out.writeUTF("File was successfully deleted");
+						} else {
+							out.writeUTF("File does not exist");
+						}
+					} catch (IOException e){
+						e.printStackTrace();
+					}
 					// TODO: 02.03.2021
 					// realize remove
 				}
