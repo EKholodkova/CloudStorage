@@ -1,36 +1,57 @@
 package client;
 
+import Netty.UsersList;
+
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class Client {
 	private final Socket socket;
 	private final DataInputStream in;
 	private final DataOutputStream out;
 
+	private JFrame frame;
 	private JLabel statusLabel;
 
 	public Client() throws IOException {
-		socket = new Socket("localhost", 1235);
+		socket = new Socket("localhost", 3000);
 		in = new DataInputStream(socket.getInputStream());
 		out = new DataOutputStream(socket.getOutputStream());
 		runClient();
 	}
 
 	private void runClient() {
-		JFrame frame = new JFrame("Cloud Storage");
+		new LoginWindow(null, new UsersList().getLoginInfo(), result -> {
+			if (result)
+				makeAppWindow();
+		});
+		//makeAppWindow();
+		//new LoginWindow(frame, new UsersList().getLoginInfo());
+	}
+
+	private void makeAppWindow() {
+		frame = new JFrame("Cloud Storage");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(400, 300);
+		frame.setSize(800, 600);
 
 		JTextArea ta = new JTextArea();
 
-		String[] arr = {"1.txt", "2.txt"};  //здесь никакого функционала. Просто посмотрела, что за JList такой
-		JList jl = new JList(arr);			//не совсем понимаю, что в нем должно отображаться. Файлы на сервере или со стороны клиента?
+		JList<String> list = new JList<>();
+		DefaultListModel<String> myModel = new DefaultListModel<>();
+		list.setModel(myModel);
+
 		JPanel listJp = new JPanel();
-		listJp.add(BorderLayout.CENTER, jl);
+		listJp.add(BorderLayout.CENTER, new JScrollPane(list));
+
+		fillist(myModel);
 
 		JPanel statusPanel = new JPanel();
 		statusPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -42,8 +63,7 @@ public class Client {
 		statusPanel.add(statusLabel);
 
 		frame.getContentPane().add(BorderLayout.WEST,listJp);
-		// TODO: 02.03.2021
-		// list file - JList
+
 		JButton uploadButton = new JButton("Upload");
 		JButton downloadButton = new JButton("Download");
 		JButton deleteButton = new JButton("Delete");
@@ -57,7 +77,6 @@ public class Client {
 
 		frame.getContentPane().add(BorderLayout.CENTER, ta);
 
-
 		frame.setVisible(true);
 
 		uploadButton.addActionListener(a -> {
@@ -69,6 +88,37 @@ public class Client {
 		deleteButton.addActionListener(a -> {
 			removeFile(ta.getText());
 		});
+	}
+
+
+
+	private void fillist(DefaultListModel<String> model) {
+		java.util.List<String> list = downloadFileList();
+		model.clear();
+		for(String fileName : list) {
+			model.addElement(fileName);
+		}
+	}
+
+	private List<String> downloadFileList() {
+		List<String> list = new ArrayList<>();
+		try {
+			StringBuilder sb = new StringBuilder();
+			out.write("list-files".getBytes(StandardCharsets.UTF_8));
+			while (true) {
+				byte[] buffer = new byte[512];
+				int size = in.read(buffer);
+				sb.append(new String(buffer, 0, size));
+				if(sb.toString().endsWith("end")) {
+					break;
+				}
+			}
+			String fileString = sb.substring(0, sb.toString().length() - 4);
+			list = Arrays.asList(fileString.split("\n"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return list;
 	}
 
 	private String sendFile(String filename) {
@@ -133,6 +183,7 @@ public class Client {
 			e.printStackTrace();
 		}
 	}
+
 
 	public static void main(String[] args) throws IOException {
 		new Client();
