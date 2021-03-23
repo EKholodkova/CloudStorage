@@ -1,4 +1,4 @@
-package consoleClient;
+package commonComponents;
 
 public class Commands {
     public static final String REGISTER = "register";

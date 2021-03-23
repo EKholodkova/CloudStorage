@@ -1,6 +1,7 @@
 package consoleClient;
 
-import Netty.DB_Interface.DB_Handler;
+import commonComponents.Commands;
+import org.w3c.dom.ls.LSOutput;
 
 import java.io.*;
 import java.net.Socket;
@@ -10,38 +11,57 @@ public class Console_client {
     private final Socket socket;
     private final DataInputStream in;
     private final DataOutputStream out;
+    private final ByteArrayOutputStream bos;
+    private final DataOutputStream dos;
 
     public Console_client() throws IOException {
         socket = new Socket("localhost", 3000);
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
+        bos = new ByteArrayOutputStream();
+        dos = new DataOutputStream(bos);
 
     }
 
     private void doRegister(String name, String password) throws IOException {
-        out.writeUTF(Commands.REGISTER); // command
-        out.writeUTF(name);              // username
-        out.writeUTF(password);          // password
-        out.flush();
+        dos.writeUTF(Commands.REGISTER); // command
+        System.out.println("записали команду в клиентский буфер");
+        dos.writeUTF(name);              // username
+        System.out.println("записали имя в клиентский буфер");
+        dos.writeUTF(password);          // password
+        System.out.println("записали пароль в клиентский буфер");
+        dos.flush();
+        System.out.println("слили в bos");
+        int msgSize = bos.size();
+        System.out.println("размер сообщения: " + msgSize);
+        out.writeInt(msgSize);
+        System.out.println("слили в out msgSize");
+        bos.writeTo(out);
+        System.out.println("слили клиентское сообщение в out");
+
+        int answerSize = in.readInt();
+        System.out.println(answerSize);
         String status = in.readUTF();
-        if(status.equals("Data added to database")) {
-            System.out.println("Registration successful!");
-        } else {
-            System.out.println("Registration failed. Try again");
-        }
+        System.out.println(status);
+//        if(status.equals("Data added to database")) {
+//            System.out.println("Registration successful!");
+//        } else {
+//            System.out.println("Registration failed. Try again");
+//        }
     }
 
     private void deleteAccount(String name, String password) throws IOException {
-        out.writeUTF(Commands.DELETE_USER); // command
-        out.writeUTF(name);                 // username
-        out.writeUTF(password);             // password
-        out.flush();
+        dos.writeUTF(Commands.DELETE_USER); // command
+        dos.writeUTF(name);                 // username
+        dos.writeUTF(password);             // password
+        dos.flush();
+        int msgSize = bos.size();
+        out.writeInt(msgSize);
+        bos.writeTo(out);
+        int answerSize = in.readInt();
+        System.out.println(answerSize);
         String status = in.readUTF();
-        if(status.equals("Data removed from database")) {
-            System.out.println("Account removed");
-        } else {
-            System.out.println("Account removal failed. Try again");
-        }
+        System.out.println(status);
     }
 
 //    private boolean doLogin(String name, String password) throws SQLException{
@@ -60,19 +80,24 @@ public class Console_client {
         }
         File file = new File(fileName);
         if (file.exists()) {
-            out.writeUTF(Commands.UPLOAD);  //command
-            out.writeUTF(name);             //username
-            out.writeUTF(password);         //password
-            out.writeUTF(fileName);         //filename
+            dos.writeUTF(Commands.UPLOAD);  //command
+            dos.writeUTF(name);             //username
+            dos.writeUTF(password);         //password
+            dos.writeUTF(fileName);         //filename
             long length = file.length();
-            out.writeLong(length);          //fileSize
+            dos.writeLong(length);          //fileSize
             FileInputStream fis = new FileInputStream(file);
             int read = 0;
             byte[] buffer = new byte[256];
             while ((read = fis.read(buffer)) != -1) {
-                out.write(buffer, 0, read);  //data
+                dos.write(buffer, 0, read);  //data
             }
-            out.flush();
+            dos.flush();
+            int msgSize = bos.size();
+            out.writeInt(msgSize);
+            bos.writeTo(out);              //msgSize, command, username, password, filename, fileSize, fileData
+            int answerSize = in.readInt();
+            System.out.println(answerSize);
             String status = in.readUTF();
             System.out.println(status);
         } else {
@@ -88,8 +113,10 @@ public class Console_client {
         } else {
             fileName = args.get(0);
         }
-        out.writeUTF(Commands.DOWNLOAD);
-        out.writeUTF(fileName);
+        dos.writeUTF(Commands.DOWNLOAD);
+        dos.writeUTF(name);
+        dos.writeUTF(password);
+        dos.writeUTF(fileName);
         File file = new File(fileName);
         if (!file.exists()) {  // TODO: fix it
             file.createNewFile();
@@ -119,11 +146,16 @@ public class Console_client {
         } else {
             objName = args.get(0);
         }
-        out.writeUTF(Commands.DELETE_OBJ);
-        out.writeUTF(name);
-        out.writeUTF(password);
-        out.writeUTF(objName);
-        out.flush();
+        dos.writeUTF(Commands.DELETE_OBJ);
+        dos.writeUTF(name);
+        dos.writeUTF(password);
+        dos.writeUTF(objName);
+        dos.flush();
+        int msgSize = bos.size();
+        out.writeInt(msgSize);
+        bos.writeTo(out);
+        int answerSize = in.readInt();
+        System.out.println(answerSize);
         String status = in.readUTF();
         System.out.println(status);
     }
@@ -136,11 +168,16 @@ public class Console_client {
         } else {
             pathName = args.get(0);
         }
-        out.writeUTF(Commands.MAKE_DIR);
-        out.writeUTF(name);
-        out.writeUTF(password);
-        out.writeUTF(pathName);
-        out.flush();
+        dos.writeUTF(Commands.MAKE_DIR);
+        dos.writeUTF(name);
+        dos.writeUTF(password);
+        dos.writeUTF(pathName);
+        dos.flush();
+        int msgSize = bos.size();
+        out.writeInt(msgSize);
+        bos.writeTo(out);
+        int answerSize = in.readInt();
+        System.out.println(answerSize);
         String status = in.readUTF();
         System.out.println(status);
     }
@@ -152,31 +189,41 @@ public class Console_client {
         } else {
             pathName = args.get(0);
         }
-        out.writeUTF(Commands.LIST);
-        out.writeUTF(name);
-        out.writeUTF(password);
-        out.writeUTF(pathName);
-        out.flush();
+        dos.writeUTF(Commands.LIST);
+        dos.writeUTF(name);
+        dos.writeUTF(password);
+        dos.writeUTF(pathName);
+        dos.flush();
+        int msgSize = bos.size();
+        out.writeInt(msgSize);
+        bos.writeTo(out);
+        int answerSize = in.readInt();
+        System.out.println(answerSize);
         String filesList = in.readUTF();
         System.out.println(filesList);
     }
 
     private void copyFile(String name, String password, List<String> args) throws IOException {
+        String source = "";
         String target = "";
-        String destination = "";
         if(args.size() <= 1) {
             System.out.println("Enter target file name and destination file name");
             return;
         } else {
-            target = args.get(0);
-            destination = args.get(1);
+            source = args.get(0);
+            target = args.get(1);
         }
-        out.writeUTF(Commands.COPY);
-        out.writeUTF(name);
-        out.writeUTF(password);
-        out.writeUTF(target);
-        out.writeUTF(destination);
-        out.flush();
+        dos.writeUTF(Commands.COPY);
+        dos.writeUTF(name);
+        dos.writeUTF(password);
+        dos.writeUTF(source);
+        dos.writeUTF(target);
+        dos.flush();
+        int msgSize = bos.size();
+        out.writeInt(msgSize);
+        bos.writeTo(out);
+        int answerSize = in.readInt();
+        System.out.println(answerSize);
         String status = in.readUTF();
         System.out.println(status);
     }
@@ -225,10 +272,10 @@ public class Console_client {
                 }
             }
         }
-        System.out.println(userName);
-        System.out.println(password);
-        System.out.println(command);
-        System.out.println(arguments.toString());
+//        System.out.println(userName);
+//        System.out.println(password);
+//        System.out.println(command);
+//        System.out.println(arguments.toString());
 
         if(userName == null || password == null) {
             System.out.println("Login or password is not filled in");

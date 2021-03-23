@@ -7,6 +7,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 
@@ -22,9 +24,9 @@ public class NettyServer {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             socketChannel.pipeline().addLast(
-                                    new StringEncoder(),   //out-1
-                                    new StringDecoder(),   //in-1
-                                    new FileHandler()   //in-2
+                                    new LengthFieldPrepender(4),   //out-1
+                                    new LengthFieldBasedFrameDecoder(1024*1024*128,0,4),   //in-1
+                                    new ClientHandler()   //in-2
                             );
                         }
                     });
