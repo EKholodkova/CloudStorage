@@ -1,11 +1,13 @@
-package consoleClient;
+package console_Client;
 
-import commonComponents.Commands;
-import org.w3c.dom.ls.LSOutput;
+import common_Components.Commands;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Console_client {
     private final Socket socket;
@@ -84,8 +86,8 @@ public class Console_client {
             dos.writeUTF(name);             //username
             dos.writeUTF(password);         //password
             dos.writeUTF(fileName);         //filename
-            long length = file.length();
-            dos.writeLong(length);          //fileSize
+            int length = (int)file.length();
+            dos.writeInt(length);          //fileSize
             FileInputStream fis = new FileInputStream(file);
             int read = 0;
             byte[] buffer = new byte[256];
@@ -113,28 +115,37 @@ public class Console_client {
         } else {
             fileName = args.get(0);
         }
+        File file = new File(fileName);
+        if(file.exists()) {
+            System.out.println("Local file already exists");
+            return;
+        }
         dos.writeUTF(Commands.DOWNLOAD);
         dos.writeUTF(name);
         dos.writeUTF(password);
         dos.writeUTF(fileName);
-        File file = new File(fileName);
-        if (!file.exists()) {  // TODO: fix it
+        dos.flush();
+        int msgSize = bos.size();
+        out.writeInt(msgSize);
+        bos.writeTo(out);
+        int answerSize = in.readInt();
+        System.out.println("Answer size: " + answerSize);
+        int fileSize = in.readInt();
+        if(fileSize > 0) {
             file.createNewFile();
-//            System.out.println("file created");
-        }
-        int responseCode = in.readInt();
-        if(responseCode == 0) {
-            long size = in.readLong();
-            System.out.println("size:" + size);
+            System.out.println("size:" + fileSize);
             FileOutputStream fos = new FileOutputStream(file);
             byte[] buffer = new byte[256];
-            for (int i = 0; i < (size + 255) / 256; i++) {
+            for (int i = 0; i < (fileSize + 255) / 256; i++) {
                 int read = in.read(buffer);
                 fos.write(buffer, 0, read);
             }
             fos.close();
+        } else if(fileSize == 0) {
+            file.createNewFile();
+            System.out.println("Downloaded file " + fileName + " is empty");
         } else {
-            System.out.println("Unknown error");
+            System.out.println("File not found");
         }
     }
 

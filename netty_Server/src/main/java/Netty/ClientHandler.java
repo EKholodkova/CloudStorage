@@ -1,7 +1,6 @@
 package Netty;
 
-import Netty.DB_Interface.DB_Handler;
-import commonComponents.Commands;
+import common_Components.Commands;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
@@ -10,7 +9,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.nio.file.Files;
 
 
 public class ClientHandler extends ChannelInboundHandlerAdapter {
@@ -59,7 +57,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                 ctx.close();
             });
         }
-        if(command.equals(Commands.DELETE_OBJ)) { // currentDir is not working!
+        if(command.equals(Commands.DELETE_OBJ)) {
             if(executor.loginUser(userName, password)) {
                 String objName = reader.readUTF();
                 System.out.println("имя папки или файла - " + objName);
@@ -103,7 +101,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
             if(executor.loginUser(userName, password)) {
                 String fileName = reader.readUTF();
                 System.out.println("имя загружаемого файла - " + fileName);
- //               dos.writeUTF(executor.uploadFile(fileName));
+                int fileSize = reader.readInt();
+                System.out.println("размер загружаемого файла _ " + fileSize);
+                byte[] fileData = reader.readAllBytes();
+                System.out.println(fileData.length);
+                dos.writeUTF(executor.uploadFile(fileName, fileSize, fileData));
             } else {
                 dos.writeUTF("Account not found");
             }
@@ -117,7 +119,15 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
             if(executor.loginUser(userName, password)) {
                 String fileName = reader.readUTF();
                 System.out.println("имя скачиваемого файла - " + fileName);
- //               dos.writeUTF(executor.downloadFile(fileName));
+                byte[] fileData = executor.downloadFile(fileName);
+                int fileSize = -1;
+                if(fileData != null) {
+                    fileSize = fileData.length;
+                }
+                dos.writeInt(fileSize);
+                if(fileSize > 0) {
+                    dos.write(fileData);
+                }
             } else {
                 dos.writeUTF("Account not found");
             }

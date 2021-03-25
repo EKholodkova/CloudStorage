@@ -1,4 +1,4 @@
-package commonComponents;
+package common_Components;
 
 public class Commands {
     public static final String REGISTER = "register";

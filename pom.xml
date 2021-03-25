@@ -6,7 +6,13 @@
 
     <groupId>org.kwazart</groupId>
     <artifactId>CloudStorage</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>netty_Server</module>
+        <module>console_Client</module>
+        <module>common_Components</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>15</maven.compiler.source>
@@ -27,18 +33,18 @@
         </plugins>
     </build>
 
-    <dependencies>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>4.1.59.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.23</version>
-        </dependency>
-    </dependencies>
+<!--    <dependencies>-->
+<!--        <dependency>-->
+<!--            <groupId>io.netty</groupId>-->
+<!--            <artifactId>netty-all</artifactId>-->
+<!--            <version>4.1.59.Final</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>mysql</groupId>-->
+<!--            <artifactId>mysql-connector-java</artifactId>-->
+<!--            <version>8.0.23</version>-->
+<!--        </dependency>-->
+<!--    </dependencies>-->
 
 
 

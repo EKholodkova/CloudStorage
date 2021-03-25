@@ -2,13 +2,11 @@ package Netty;
 
 import Netty.DB_Interface.DB_Handler;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLOutput;
 
 public class Command_executor {
     private final DB_Handler handler = new DB_Handler();
@@ -99,5 +97,29 @@ public class Command_executor {
 
     protected String getFilesList() {
         return String.join("\t", new File(currentDir.toString()).list());
+    }
+
+    protected String uploadFile(String fileName, long fileSize, byte[] fileData) throws IOException {
+        File file = new File(currentDir + File.separator + fileName);
+        if(!file.exists()) {
+            file.createNewFile();
+        } else {
+            return "File " + fileName + " already exists";
+        }
+        FileOutputStream fos = new FileOutputStream(file);
+        fos.write(fileData);
+        fos.close();
+        return "File " + fileName + ", size: " + fileSize + " was uploaded";
+    }
+
+    protected byte[] downloadFile(String fileName) throws IOException {
+        byte[] buffer = null;
+        File file = new File(currentDir + File.separator + fileName);
+        if(file.exists()) {
+            FileInputStream fis = new FileInputStream(file);
+            buffer = fis.readAllBytes();
+            fis.close();
+        }
+        return buffer;
     }
 }
