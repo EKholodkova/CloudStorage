@@ -7,6 +7,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public class Command_executor {
     private final DB_Handler handler = new DB_Handler();
@@ -35,8 +36,12 @@ public class Command_executor {
         return rs.isBeforeFirst();
     }
 
+    protected String changePsw(String name, String password, String newPassword) throws SQLException {
+        handler.changeUserData(name, password, newPassword);
+        return "Password " + password + " changed to " + newPassword;
+    }
+
     protected String deleteUser(String name, String password) throws SQLException, IOException {
-        System.out.println("мы в deleteUser");
         handler.removeUserFromDb(name, password);
 
         Path rootPath = Paths.get(currentDir.toString());
@@ -54,9 +59,27 @@ public class Command_executor {
                 return  FileVisitResult.CONTINUE;
             }
         });
-        System.out.println("юзер удален");
+        System.out.println("Is user home exists " + new File(currentDir.toString()).exists());
         return "User " + name + " was removed successfully";
     }
+
+    protected String findFile(String fileName) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        Files.walkFileTree(currentDir,  new  SimpleFileVisitor<Path>() {
+            @Override
+            public  FileVisitResult  visitFile (Path file, BasicFileAttributes attrs) {
+                if (file.getFileName().toString().equals(fileName)) {
+                    sb.append("file found at path: " + file.subpath(2, file.getNameCount()).toString() + "\n");
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        if(sb.toString().isEmpty()) {
+            return "File not found";
+        }
+        return sb.toString();
+    }
+
 
     protected String removeObj(String objName) throws IOException {
         Path path = Path.of( currentDir.toString() + File.separator + objName);
@@ -69,23 +92,34 @@ public class Command_executor {
     }
 
     protected String makeDir(String dir) throws IOException {
-        System.out.println("мы в методе makeDir");
-        System.out.println(currentDir.toString());
         Path path = Path.of(currentDir.toString(), dir);
-        System.out.println("задаем название директории - " + path.toString());
         if(!Files.exists(path)) {
-            System.out.println("если такой директории нет...");
             Path newDir = Files.createDirectory(path);
-            System.out.println("создаем такую директорию");
             return dir + " was created successfully";
         }
         return dir + " already exists";
+    }
+
+    protected String moveFile(String src, String target) throws IOException {
+        Path sourcePath = Path.of(currentDir.toString() + File.separator + src);
+        if(!Files.exists(sourcePath)) {
+            return "Source path does not exist";
+        }
+        Path targetPath = Path.of(currentDir.toString() + File.separator + target);
+        if(Files.exists(targetPath)) {
+            return "Destination path already exists";
+        }
+        Files.move(sourcePath, targetPath);
+        return "File " + src + " moved to " + target;
     }
 
     protected String copyFile(String src, String target) throws IOException {
         Path sourcePath = Path.of(currentDir.toString() + File.separator + src);
         if(!Files.exists(sourcePath)) {
             return "Source path does not exist";
+        }
+        if (Files.isDirectory(sourcePath)) {
+            return "Directories copying not available";
         }
         Path targetPath = Path.of(currentDir.toString() + File.separator + target);
         if(Files.exists(targetPath)) {
@@ -95,8 +129,20 @@ public class Command_executor {
         return "Copy was created";
     }
 
-    protected String getFilesList() {
-        return String.join("\t", new File(currentDir.toString()).list());
+    protected String getFilesList(String dirName) {
+        String[] listOfFiles = new File(currentDir.toString() + File.separator + dirName).list();
+        StringBuilder sb = new StringBuilder();
+        if(listOfFiles != null) {
+            Arrays.sort(listOfFiles);
+            for(int i = 0; i < listOfFiles.length; i++) {
+                if(new File(currentDir.toString() + File.separator + dirName + File.separator + listOfFiles[i]).isDirectory()) {
+                    sb.append(listOfFiles[i] + "/" + "\n");
+                } else {
+                    sb.append(listOfFiles[i] + "\n");
+                }
+            }
+        }
+        return sb.toString();
     }
 
     protected String uploadFile(String fileName, long fileSize, byte[] fileData) throws IOException {

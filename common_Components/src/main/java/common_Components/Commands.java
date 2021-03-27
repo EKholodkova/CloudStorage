@@ -10,4 +10,7 @@ public class Commands {
     public static final String COPY = "copy";
     public static final String MAKE_DIR = "mkdir";
     public static final String HELP = "help";
+    public static final String CHANGE_PASSWORD = "change_psw";
+    public static final String MOVE = "move";
+    public static final String SEARCH = "search";
 }

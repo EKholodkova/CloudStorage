@@ -37,6 +37,16 @@ public class DB_Handler {
         ps.executeUpdate();
     }
 
+    public void changeUserData(String userName, String password, String newPassword) throws SQLException {
+        String update = "UPDATE " + Constants.USERS_TABLE + " SET " + Constants.USER_PASSWORD +
+                " = ? WHERE " + Constants.USER_NAME + " = ? AND " + Constants.USER_PASSWORD + " = ?";
+        PreparedStatement ps = getDbConnection().prepareStatement(update);
+        ps.setString(1, newPassword);
+        ps.setString(2, userName);
+        ps.setString(3, password);
+        ps.executeUpdate();
+    }
+
     public ResultSet getUserFromDb(String userName, String password) throws SQLException {
         ResultSet resSet = null;
         String select = "SELECT * FROM " + Constants.USERS_TABLE + " WHERE " +
@@ -48,25 +58,4 @@ public class DB_Handler {
         return resSet;
     }
 
-
-    public static void main(String[] args) {
-        String command;
-        String username;
-        String password;
-
-        for (String s : args) {
-            if (s.startsWith("-p")) {
-                System.out.println("The password is: " + s.substring(2));
-                password = s.substring(2);
-            }
-        }
-
-
-        /*try {
-            new DB_Handler().removeUserFromDb("vova", "1234");
-            System.out.println("removed!");
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }*/
-    }
 }

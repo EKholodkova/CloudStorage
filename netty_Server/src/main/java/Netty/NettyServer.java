@@ -10,6 +10,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
+import java.io.File;
+import java.nio.file.Path;
+
 public class NettyServer {
     public NettyServer() {
         EventLoopGroup auth = new NioEventLoopGroup(1);
@@ -41,6 +44,14 @@ public class NettyServer {
     }
 
     public static void main(String[] args) {
+        File serverDir = new File("server");
+        if(!serverDir.exists()) {
+            serverDir.mkdir();
+        }
+        if (!serverDir.isDirectory()) {
+            System.out.println("Директория 'server' не может быть создана так как уже существует 'server' файл");
+            return;
+        }
         new NettyServer();
     }
 }
