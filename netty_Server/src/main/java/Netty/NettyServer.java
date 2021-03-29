@@ -11,15 +11,13 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Класс использует возможности Netty библиотеки
  * Пулл потоков auth для прослушивания подключений использует одну нить
  * В пулле потоков обработки клиентских запросов workers количество нитей задается динамически
  * pipeline содержит 3 хендлера
+ * Включает стартовый метод
  */
 public class NettyServer {
 
@@ -52,7 +50,10 @@ public class NettyServer {
         }
     }
 
-
+    /**
+     * Точка входа
+     * @param args в качестве аргументов могут быть переданы логин и пароль для соединения с MySQL -pPassword -uUsername
+     */
     public static void main(String[] args) {
         String userName = null;
         String password = null;
@@ -66,7 +67,8 @@ public class NettyServer {
         }
 
         if (userName == null || password == null) {
-            System.out.println("No username and/or password options specified.\nDefault username and password will be used for MySql connection.");
+            System.out.println("No username and/or password options specified.\n" +
+                    "Default username and password will be used for MySql connection.");
         }
 
 

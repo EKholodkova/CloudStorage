@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Клиентское приложение.
+ * Включает стартовый метод, но полноценное использование возможно только из командной строки.
+ */
 public class Console_client {
     private final Socket socket;
     private final DataInputStream in;
@@ -17,6 +21,13 @@ public class Console_client {
     private final ByteArrayOutputStream bos;
     private final DataOutputStream dos;
 
+    /**
+     * В конструкторе запускается подключение к серверу
+     * и инициализируются входящий и исходящий потоки.
+     * Клиент завершает работу после выполнения одной введенной команды, поэтому создание
+     * нити для взаимодействия с сервером после подключения к нему не требуется.
+     * @throws IOException
+     */
     public Console_client() throws IOException {
         socket = new Socket("localhost", 3000);
         in = new DataInputStream(socket.getInputStream());
@@ -25,6 +36,22 @@ public class Console_client {
         dos = new DataOutputStream(bos);
     }
 
+    /* Все методы кроме статических реализуют протокол взаимодействия с сервером.
+    Сообщения отправляются в следующем формате: (int) размер сообщения, (String) команда,
+    (String) имя пользователя, (String) пароль пользователя, (String) параметры команды,
+    если они есть (как правило, 1-2), а также (byte[]) данные содержащиеся в файле -
+    в случае upload.
+    От сервера клиент ожидает (int) размер ответного сообщения, (String) сообщение от сервера.
+    Или  (int) размер ответного сообщения, (int) размер файла и (byte[]) данные - в случае
+    download.
+     */
+
+    /**
+     * Отправка команды о регистрации.
+     * @param name имя пользователя
+     * @param password пароль
+     * @throws IOException
+     */
     private void doRegister(String name, String password) throws IOException {
         dos.writeUTF(Commands.REGISTER);
         dos.writeUTF(name);
@@ -38,6 +65,13 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отправка команды о смене пароля.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void changePsw(String name, String password, List<String> args) throws IOException {
         String newPsw = "";
         if(args.size() == 0) {
@@ -62,6 +96,12 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отправка команды об удалении пользователя.
+     * @param name
+     * @param password
+     * @throws IOException
+     */
     private void deleteAccount(String name, String password) throws IOException {
         dos.writeUTF(Commands.DELETE_USER);
         dos.writeUTF(name);
@@ -75,6 +115,13 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отправка команды о загрузке файла на сервер, отправка содержимого файла.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void sendFile(String name, String password, List<String> args) throws IOException {
         String fileName = "";
         if(args.size() == 0) {
@@ -112,6 +159,14 @@ public class Console_client {
         }
     }
 
+    /**
+     * Отправка команды о скачивании файла из серверного репозитория.
+     * Прием и обработка файловых данных.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void getFile(String name, String password, List<String> args) throws IOException {
         String fileName = "";
         if(args.size() == 0) {
@@ -161,6 +216,13 @@ public class Console_client {
         }
     }
 
+    /**
+     * Отправка команды об удалении объекта.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void removeObj(String name, String password, List<String> args) throws IOException {
         String objName = "";
         if(args.size() == 0) {
@@ -185,6 +247,13 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отправка команды о создании директории.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void createDir(String name, String password, List<String> args) throws IOException {
         String pathName = "";
         if(args.size() == 0) {
@@ -209,6 +278,14 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отправка команды об отображении файлов, содержащихся в указанной директории.
+     * Если директория не указана, по умолчанию отображаются файлы из корневой папки.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void getFilesList(String name, String password, List<String> args) throws IOException {
         String pathName = "";
         if(args.size() == 0) {
@@ -232,6 +309,13 @@ public class Console_client {
         System.out.println(filesList);
     }
 
+    /**
+     * Отправка команды о перемещении файла.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void moveFile(String name, String password, List<String> args) throws IOException {
         String source = "";
         String target = "";
@@ -259,6 +343,13 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отправка команды о поиске заданного файла.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void findFile(String name, String password, List<String> args) throws IOException {
         String fileName = "";
         if(args.size() == 0) {
@@ -283,6 +374,13 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отправка команды о копировании файла.
+     * @param name
+     * @param password
+     * @param args
+     * @throws IOException
+     */
     private void copyFile(String name, String password, List<String> args) throws IOException {
         String source = "";
         String target = "";
@@ -310,6 +408,9 @@ public class Console_client {
         System.out.println(status);
     }
 
+    /**
+     * Отображение списка доступных команд.
+     */
     static private void getHelp() {
         Map<String, String> helpList = new TreeMap<>();
         helpList.put(Commands.REGISTER, "       create user_account");
@@ -332,12 +433,23 @@ public class Console_client {
         }
     }
 
+    /**
+     * Закрывает входящий, исходящий потоки.
+     * @throws IOException
+     */
     private void close() throws IOException {
         in.close();
         out.close();
     }
 
 
+    /**
+     * В качестве аргументов передаются имя, пароль пользователя и команда с соответствующими ей параметрами.
+     * В зависимости от введенной команды вызывается подходящий метод объекта Console_client.
+     * static метод getHelp() выводится в случае, если аргументов не достаточно, или введена неизвестная команда
+     * @param args агрументы командной строки
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         String userName = null;
         String password = null;

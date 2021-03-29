@@ -12,7 +12,7 @@ import java.io.DataOutputStream;
 
 /**
  * Класс - обработчик тела клиентского сообщения. Является наследником ChannelInboundHandlerAdapter,
- * входящий хендлер конвеера Netty сервера.
+ * входящий хендлер конвеера Netty сервера. Создается по одному экземпляру на соединение.
  */
 
 public class ClientHandler extends ChannelInboundHandlerAdapter {
@@ -22,6 +22,13 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     private final String mySqlUsername;
     private final String mySqlPassword;
 
+    /**
+     * В объект ClientHandler-а передаются параметры для подключения к БД.
+     * Они необходимы для создания обработчика пользовательских команд Command_executor,
+     * который, в свою очередь, содержит ссылку на DB_Handler.
+     * @param username - (String) логин от БД
+     * @param password - (String) пароль от БД
+     */
     ClientHandler(String username, String password) {
         super();
         mySqlUsername = username;
@@ -31,9 +38,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     /**
      * В методе обрабатываются данные, пришедшие со стороны клиента, согласно установленному протоколу.
      * Порядок считываемых данных: (int) размер сообщения, (String) команда, (String) имя пользователя, (String) пароль пользователя.
-     * Значение команды задает количество аргументов, считываемых после пароля.
+     * В зависимости от команды может варьироваться число аргументов (к команде) следующих после пароля пользователя.
      * Как только необходимые данные получены, обработка команд передается объекту класса Command_executor.
-     * Результаты его работы отправляются клиенту.
+     * Результаты его работы отправляются клиенту, после чего соединение с клиентом закрывается.
      * @param ctx
      * @param msg
      * @throws Exception
