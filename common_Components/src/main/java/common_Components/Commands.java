@@ -1,5 +1,10 @@
 package common_Components;
 
+/**
+ * Класс содержит константы команд приложения, доступных пользователям клиента.
+ * Команды обрабатываются как на клиентской, так и на серверной стороне.
+ */
+
 public class Commands {
     public static final String REGISTER = "register";
     public static final String DELETE_USER = "delete_user";

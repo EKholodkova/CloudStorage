@@ -91,7 +91,7 @@ public class Console_client {
             dos.writeUTF(Commands.UPLOAD);
             dos.writeUTF(name);
             dos.writeUTF(password);
-            dos.writeUTF(fileName);
+            dos.writeUTF(file.getName());
             int length = (int)file.length();
             dos.writeInt(length);
             FileInputStream fis = new FileInputStream(file);

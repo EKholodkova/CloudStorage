@@ -10,22 +10,23 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 public class Command_executor {
-    private final DB_Handler handler = new DB_Handler();
+    private final DB_Handler handler;
     private Path currentDir = Path.of("server");
     private String userName;
 
-    public Command_executor(String userName) throws IOException {
-        this.userName = userName;
+    public Command_executor(String userName, String mySqlUsername, String mySqlPassword) throws IOException {
+        handler = new DB_Handler(mySqlUsername, mySqlPassword);
         currentDir = Paths.get(currentDir + File.separator + userName);
-        if(!Files.exists(currentDir)) {
-            Files.createDirectory(currentDir);
-        }
+        this.userName = userName;
     }
 
-    protected boolean registerUser(String name, String password) throws SQLException {
+    protected boolean registerUser(String name, String password) throws Exception {
         ResultSet rs = handler.getUserFromDb(name, password);
         if(!rs.isBeforeFirst()) {
             handler.addUserToDb(name, password);
+            if (!Files.exists(currentDir)) {
+                Files.createDirectory(currentDir);
+            }
             return true;
         }
         return false;

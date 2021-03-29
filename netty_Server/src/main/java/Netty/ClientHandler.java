@@ -10,12 +10,34 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 
+/**
+ * Класс - обработчик тела клиентского сообщения. Является наследником ChannelInboundHandlerAdapter,
+ * входящий хендлер конвеера Netty сервера.
+ */
 
 public class ClientHandler extends ChannelInboundHandlerAdapter {
     private final ByteArrayOutputStream bos = new ByteArrayOutputStream();
     private final DataOutputStream dos = new DataOutputStream(bos);
     private Command_executor executor;
+    private final String mySqlUsername;
+    private final String mySqlPassword;
 
+    ClientHandler(String username, String password) {
+        super();
+        mySqlUsername = username;
+        mySqlPassword = password;
+    }
+
+    /**
+     * В методе обрабатываются данные, пришедшие со стороны клиента, согласно установленному протоколу.
+     * Порядок считываемых данных: (int) размер сообщения, (String) команда, (String) имя пользователя, (String) пароль пользователя.
+     * Значение команды задает количество аргументов, считываемых после пароля.
+     * Как только необходимые данные получены, обработка команд передается объекту класса Command_executor.
+     * Результаты его работы отправляются клиенту.
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf buf = (ByteBuf) msg;
@@ -24,7 +46,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         String command = reader.readUTF();
         String userName = reader.readUTF();
         String password = reader.readUTF();
-        executor = new Command_executor(userName);
+        executor = new Command_executor(userName, mySqlUsername, mySqlPassword);
         if(command.equals(Commands.REGISTER)) {
             if(executor.registerUser(userName, password)) {
                 dos.writeUTF("Account was successfully registered");
@@ -38,7 +60,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
             });
         }
         if(command.equals(Commands.CHANGE_PASSWORD)) {
-            if(executor.loginUser(userName, password)) {
+            if(executor.loginUser(userName, password)) {   // все команды, кроме register, требуют предварительной проверки на наличие пользователя в БД
                 String newPassword = reader.readUTF();
                 dos.writeUTF(executor.changePsw(userName, password, newPassword));
             } else {
@@ -181,8 +203,12 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         buf.release();
     }
 
-
-
+    /**
+     * Обработка возможных исключений.
+     * @param ctx
+     * @param cause
+     * @throws Exception
+     */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();

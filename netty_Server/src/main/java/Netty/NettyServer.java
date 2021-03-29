@@ -12,9 +12,18 @@ import io.netty.handler.codec.LengthFieldPrepender;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Класс использует возможности Netty библиотеки
+ * Пулл потоков auth для прослушивания подключений использует одну нить
+ * В пулле потоков обработки клиентских запросов workers количество нитей задается динамически
+ * pipeline содержит 3 хендлера
+ */
 public class NettyServer {
-    public NettyServer() {
+
+    public NettyServer(String mySqlUsername, String mySqlPassword) {
         EventLoopGroup auth = new NioEventLoopGroup(1);
         EventLoopGroup workers = new NioEventLoopGroup();
         try {
@@ -25,13 +34,13 @@ public class NettyServer {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             socketChannel.pipeline().addLast(
-                                    new LengthFieldPrepender(4),   //out-1
-                                    new LengthFieldBasedFrameDecoder(1024*1024*128,0,4),   //in-1
-                                    new ClientHandler()   //in-2
+                                    new LengthFieldPrepender(4),   // каждое сообщение клиента содержит заголовок в 4 байта с его длиной
+                                    new LengthFieldBasedFrameDecoder(1024*1024*128,0,4),   // от клиента сообщения тоже содержат такой заголовок
+                                    new ClientHandler(mySqlUsername, mySqlPassword)   // обработчик тела сообщения от клиента
                             );
                         }
                     });
-            ChannelFuture future = b.bind(3000).sync();
+            ChannelFuture future = b.bind(3000).sync(); // указывается № порта
             System.out.println("Server started");
             future.channel().closeFuture().sync();
             System.out.println("Server finished");
@@ -43,8 +52,25 @@ public class NettyServer {
         }
     }
 
+
     public static void main(String[] args) {
-        File serverDir = new File("server");
+        String userName = null;
+        String password = null;
+
+        for(String s : args) {
+            if(s.startsWith("-u")) {
+                userName = s.substring(2);
+            } else if(s.startsWith("-p")) {
+                password = s.substring(2);
+            }
+        }
+
+        if (userName == null || password == null) {
+            System.out.println("No username and/or password options specified.\nDefault username and password will be used for MySql connection.");
+        }
+
+
+        File serverDir = new File("server");  // пред запуском сервера проверяем наличие корневой директории, куда будут помещаться клиентские папки
         if(!serverDir.exists()) {
             serverDir.mkdir();
         }
@@ -52,6 +78,6 @@ public class NettyServer {
             System.out.println("Директория 'server' не может быть создана так как уже существует 'server' файл");
             return;
         }
-        new NettyServer();
+        new NettyServer(userName, password);
     }
 }
