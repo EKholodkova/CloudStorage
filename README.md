@@ -17,6 +17,9 @@
 * JRE 15
 
 ## Как пользоваться
+Скачать релиз: https://github.com/EKholodkova/CloudStorage/releases/download/1.0/CloudStorage.1.0.zip
+
+Распаковать.
 ### Сервер
 Перед первым запуском сервера нужно создать базу данных Cloud_Storage_db
 
