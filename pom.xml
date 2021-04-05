@@ -12,6 +12,7 @@
         <module>netty_Server</module>
         <module>console_Client</module>
         <module>common_Components</module>
+        <module>BClient</module>
     </modules>
 
     <properties>
